@@ -19,6 +19,9 @@ on:
         description: "yes/no if pending matrices are not empty"
         value: ${{ jobs.static-validation.outputs.has_pending_matrices }}
 
+env:
+  BIOIMAGEIO_COUNT_RDF_DOWNLOADS: 'false'
+
 jobs:
   static-validation:  # + update rdfs
     runs-on: ubuntu-latest
@@ -104,6 +107,9 @@ jobs:
           conda-forge::bioimageio.spec
       continue-on-error: true  # we inspect this step's outcome in dynamic_validation.py
       timeout-minutes: 60
+    - name: install minimal script dependencies if val env failed
+      if: ${{ steps.create_env.outcome != 'success' }}
+      run: pip install typer bioimageio.spec
     - name: get artifact name wo forward slashes
       id: artifact_name
       run: echo ::set-output name=name::dynamic_validation_artifact_$(echo ${{ matrix.resource_id }}_${{ matrix.version_id }}_${{ matrix.weight_format }} | sed 's#/##g')
